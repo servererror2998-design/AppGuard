@@ -27,5 +27,18 @@
                 <data android:scheme="appguard" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".AppGuardAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="false"
+            android:label="AppGuard">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/appguard_accessibility_service" />
+        </service>
     </application>
 </manifest>
