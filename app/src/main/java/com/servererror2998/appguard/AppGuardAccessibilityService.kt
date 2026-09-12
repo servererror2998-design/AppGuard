@@ -4,10 +4,11 @@ import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.view.accessibility.AccessibilityEvent
 import android.widget.Toast
+import android.os.SystemClock
 
 class AppGuardAccessibilityService : AccessibilityService() {
-    private var lastForegroundPackage: String? = null
     private var lastBlockedPackage: String? = null
+    private var lastBrowserSeenAt: Long = 0L
 
     private val browserPackages = setOf(
         "com.android.chrome",
@@ -43,12 +44,17 @@ class AppGuardAccessibilityService : AccessibilityService() {
         val currentPackage = event.packageName?.toString() ?: return
         if (currentPackage == packageName) return
 
-        val wasBrowser = lastForegroundPackage in browserPackages
+        val now = SystemClock.elapsedRealtime()
+        if (currentPackage in browserPackages) {
+            lastBrowserSeenAt = now
+        }
+
+        val browserRecentlyActive = now - lastBrowserSeenAt <= 5000L
         val globalPolicy = GlobalPolicyStore(applicationContext)
 
         if (globalPolicy.isBlocking() &&
             currentPackage in blockedPackages &&
-            wasBrowser &&
+            browserRecentlyActive &&
             currentPackage != lastBlockedPackage
         ) {
             lastBlockedPackage = currentPackage
@@ -63,7 +69,6 @@ class AppGuardAccessibilityService : AccessibilityService() {
         if (currentPackage !in blockedPackages) {
             lastBlockedPackage = null
         }
-        lastForegroundPackage = currentPackage
     }
 
     override fun onInterrupt() = Unit
