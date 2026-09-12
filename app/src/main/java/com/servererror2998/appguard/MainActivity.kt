@@ -1,8 +1,10 @@
 package com.servererror2998.appguard
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
@@ -34,7 +36,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-/** Global AppGuard policy. The setting applies to every external app launch. */
 class GlobalPolicyStore(context: Context) {
     companion object {
         private const val PREFS_NAME = "appguard_settings"
@@ -44,7 +45,6 @@ class GlobalPolicyStore(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    /** false = allow all, true = block all. Default is allow all. */
     fun isBlocking(): Boolean = prefs.getBoolean(KEY_BLOCK_EXTERNAL_APPS, false)
 
     fun setBlocking(block: Boolean) {
@@ -64,9 +64,9 @@ private fun AppGuardScreen(context: Context) {
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Text("AppGuard", style = MaterialTheme.typography.headlineMedium)
-        Text("Atur satu aturan untuk semua aplikasi eksternal.")
+        Text("Mencegah browser otomatis membuka aplikasi target.")
         Text(
-            "Iklan dan isi halaman web tidak diblokir. AppGuard hanya mengatur pembukaan aplikasi eksternal melalui deep-link yang ditangani AppGuard.",
+            "Iklan dan halaman web tetap berjalan normal. AppGuard hanya menolak perpindahan dari browser ke aplikasi target.",
             style = MaterialTheme.typography.bodySmall
         )
 
@@ -75,16 +75,35 @@ private fun AppGuardScreen(context: Context) {
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("Aturan global", style = MaterialTheme.typography.titleLarge)
+                Text("1. Aktifkan layanan AppGuard", style = MaterialTheme.typography.titleLarge)
                 Text(
-                    if (blocking) "STATUS: BLOKIR SEMUA" else "STATUS: IZINKAN SEMUA",
+                    "Buka Pengaturan Aksesibilitas, pilih AppGuard, lalu aktifkan. Ini wajib agar AppGuard dapat mendeteksi aplikasi yang dibuka browser."
+                )
+                Button(
+                    onClick = {
+                        context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                    }
+                ) {
+                    Text("Buka Aksesibilitas")
+                }
+            }
+        }
+
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text("2. Aturan blokir", style = MaterialTheme.typography.titleLarge)
+                Text(
+                    if (blocking) "STATUS: BLOKIR AKTIF" else "STATUS: BLOKIR NONAKTIF",
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
                     if (blocking) {
-                        "Pembukaan aplikasi eksternal akan ditolak oleh aturan AppGuard."
+                        "Chrome/Firefox dan browser yang didukung akan dicegah membuka Shopee, TikTok, Lazada, atau WhatsApp melalui perpindahan aplikasi."
                     } else {
-                        "Pembukaan aplikasi eksternal diizinkan oleh aturan AppGuard."
+                        "Pembukaan aplikasi target dibiarkan normal."
                     }
                 )
 
@@ -96,7 +115,7 @@ private fun AppGuardScreen(context: Context) {
                         },
                         enabled = blocking
                     ) {
-                        Text("Izinkan Semua")
+                        Text("Izinkan")
                     }
 
                     OutlinedButton(
@@ -106,7 +125,7 @@ private fun AppGuardScreen(context: Context) {
                         },
                         enabled = !blocking
                     ) {
-                        Text("Blokir Semua")
+                        Text("Blokir")
                     }
                 }
             }
